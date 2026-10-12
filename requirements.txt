@@ -1,0 +1,9 @@
+# Runtime. Lower bounds only, so `pip install -U -r requirements.txt` always gets the newest compatible release.
+# Run `make lock` after installing to freeze exact versions into requirements.lock.
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+httpx>=0.27.0
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+tzdata>=2024.1            # timezone database (slim containers and Windows have none)
+vapi-server-sdk>=1.10.0   # only needed by scripts/setup_vapi.py and --live runs

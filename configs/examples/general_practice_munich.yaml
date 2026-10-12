@@ -1,0 +1,33 @@
+# Fictional demo clinic: general practice in Munich.
+
+clinic_name: "Praxis Dr. Müller"
+doctor_name: "Dr. Sarah Müller"
+doctor_title: "Fachärztin für Allgemeinmedizin"
+address: "Marienplatz 5, 80331 München"
+phone: "089 12345678"
+
+services:
+  - "Allgemeinmedizin"
+  - "Vorsorgeuntersuchungen"
+  - "Impfungen"
+  - "Labordiagnostik"
+  - "EKG"
+
+greeting: "Praxis Dr. Müller, hier spricht Lisa, die digitale Assistentin. Wie kann ich Ihnen helfen?"
+farewell: "Vielen Dank für Ihren Anruf. Auf Wiederhören!"
+
+emergency_number: "112"
+transfer_number: "+498912345678"
+
+office_hours:
+  monday:    ["08:00-12:00", "14:00-18:00"]
+  tuesday:   ["08:00-12:00", "14:00-18:00"]
+  wednesday: ["08:00-12:00", "14:00-18:00"]
+  thursday:  ["08:00-12:00", "14:00-18:00"]
+  friday:    ["08:00-12:00", "14:00-18:00"]
+  saturday:  []
+  sunday:    []
+
+slot_duration_minutes: 30
+timezone: "Europe/Berlin"
+holiday_region: "BY"

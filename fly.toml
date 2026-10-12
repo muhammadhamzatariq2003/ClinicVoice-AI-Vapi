@@ -1,0 +1,30 @@
+# Deploy:  fly volumes create clinic_data --region fra --size 1 && fly deploy
+# The volume keeps bookings.json and call_log.jsonl across restarts and deploys.
+# A volume attaches to one machine, so keep this app at a single machine (the JSON store is single-writer).
+app = "hamza-clinic-voice-agent"
+primary_region = "fra"
+
+[build]
+
+[env]
+  HOST = "0.0.0.0"
+  PORT = "8000"
+  DATA_DIR = "/app/data"
+
+[[mounts]]
+  source = "clinic_data"
+  destination = "/app/data"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "off"     # a phone agent cannot afford a cold start mid-call
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"

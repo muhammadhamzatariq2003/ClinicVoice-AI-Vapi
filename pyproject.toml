@@ -1,0 +1,14 @@
+# Tool configuration only (the project is run from source, not packaged).
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501", "B008"]   # B008: FastAPI's Depends()/Query() defaults are intentional

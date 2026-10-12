@@ -1,0 +1,42 @@
+# Clinic configuration template.
+# Copy this file, edit the values, then point CLINIC_CONFIG at it.
+# Everything the agent says to callers stays in German; keys are English.
+
+clinic_name: "Praxis Dr. Mustermann"
+doctor_name: "Dr. Max Mustermann"
+doctor_title: "Facharzt für Allgemeinmedizin"      # e.g. Zahnarzt, Physiotherapeut
+address: "Musterstraße 1, 12345 Musterstadt"
+phone: "+49 123 4567890"                           # what the agent reads out
+
+services:
+  - "Allgemeinmedizin"
+  - "Vorsorgeuntersuchungen"
+  - "Impfungen"
+
+greeting: "Praxis Dr. Mustermann, hier spricht Lisa, die digitale Assistentin. Wie kann ich Ihnen helfen?"
+farewell: "Vielen Dank für Ihren Anruf. Auf Wiederhören!"
+
+emergency_number: "112"
+transfer_number: "+491234567890"                   # E.164 format, required by Vapi
+
+# Opening hours drive three things: bookable slots, the outside-hours greeting
+# and the spoken opening-hours text. A day with [] (or missing) is closed.
+office_hours:
+  monday:    ["08:00-12:00", "14:00-18:00"]
+  tuesday:   ["08:00-12:00", "14:00-18:00"]
+  wednesday: ["08:00-12:00", "14:00-18:00"]
+  thursday:  ["08:00-12:00", "14:00-18:00"]
+  friday:    ["08:00-12:00", "14:00-18:00"]
+  saturday:  []
+  sunday:    []
+
+# Optional settings (defaults shown)
+slot_duration_minutes: 30
+timezone: "Europe/Berlin"
+holiday_region: "BY"            # FEDERAL | BY | BE | HH  (public holidays are computed for any year)
+assistant_name: "Lisa"
+# opening_hours_text: "..."     # override the auto-generated spoken hours
+
+# Extra closures such as vacation (the agent greets and refuses bookings on these days)
+closed_days: []
+#  - { date: "2026-08-10", name: "Betriebsurlaub" }

@@ -1,0 +1,84 @@
+# Scripted caller scenarios for the demo clinic.
+#
+# Each scenario has two parts:
+#   dialog_hints : what a human tester says on a real call
+#   simulate     : the webhook traffic the call should produce. `scripts/run_scenarios.py`
+#                  replays this offline to prove the server side works. It does NOT test what the
+#                  LLM says; only a real call (or --live) does that.
+#
+# Placeholders: @next_workday (next bookable open day), @opening_hours (spoken hours text),
+#               @transfer_number (clinic transfer number)
+
+scenarios:
+  - id: 1
+    name: "New patient books an appointment"
+    caller: "Thomas Schneider"
+    description: "New patient with back pain wants an appointment"
+    dialog_hints:
+      - "Guten Tag, ich hätte gerne einen Termin"
+      - "Ich bin ein neuer Patient"
+      - "Ich habe seit einer Woche Rückenschmerzen"
+      - "Thomas Schneider, geboren am 15.03.1985"
+      - "Morgen Vormittag wäre gut"
+    expected_action: "book_appointment"
+    simulate:
+      tool: "book_appointment"
+      arguments:
+        patient_name: "Thomas Schneider"
+        date: "@next_workday"
+        time: "09:00"
+        reason: "Rückenschmerzen"
+        is_new_patient: true
+      expect_contains: "Termin erfolgreich gebucht"
+
+  - id: 2
+    name: "Existing patient needs a prescription"
+    caller: "Maria Weber"
+    description: "Existing patient wants to reorder a prescription; the call goes to the front desk"
+    dialog_hints:
+      - "Hallo, ich brauche ein neues Rezept für mein Blutdruckmedikament"
+      - "Ja, ich bin schon Patientin bei Ihnen, Maria Weber"
+      - "Ramipril 5mg"
+    expected_action: "transfer_call"
+    simulate:
+      transfer_destination: true
+      expect_number: "@transfer_number"
+
+  - id: 3
+    name: "Emergency: chest pain"
+    caller: "Hans Müller"
+    description: "Caller with acute, severe chest pain. Must be sent to 112, never booked."
+    dialog_hints:
+      - "Hilfe, ich habe starke Brustschmerzen!"
+      - "Seit etwa 20 Minuten, der Schmerz strahlt in den linken Arm"
+    expected_action: "emergency_112"
+    simulate:
+      prompt_contains: ["112", "Brustschmerzen", "Keinen Termin buchen"]
+
+  - id: 4
+    name: "Opening hours question"
+    caller: "Anna Schmidt"
+    description: "Caller only wants to know when the clinic is open"
+    dialog_hints:
+      - "Können Sie mir sagen wann die Praxis geöffnet hat?"
+      - "Und samstags?"
+    expected_action: "info_only"
+    simulate:
+      prompt_contains: ["@opening_hours"]
+
+  - id: 5
+    name: "Pharma representative"
+    caller: "Dr. Klaus Fischer"
+    description: "Sales representative wants to speak to the doctor; the team gets a summary"
+    dialog_hints:
+      - "Guten Tag, hier ist Dr. Fischer von Pharma GmbH"
+      - "Ich würde gerne einen Termin mit der Ärztin vereinbaren"
+      - "Es geht um unser neues Präparat"
+    expected_action: "send_summary"
+    simulate:
+      tool: "send_summary"
+      arguments:
+        summary: "Pharma-Vertreter Dr. Fischer bittet um einen Gesprächstermin zu einem neuen Präparat."
+        caller_name: "Dr. Klaus Fischer"
+        action_required: true
+      expect_contains: "Aktion erforderlich"

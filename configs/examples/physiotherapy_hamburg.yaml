@@ -1,0 +1,34 @@
+# Fictional demo clinic: physiotherapy practice in Hamburg (continuous hours, Saturday open).
+
+clinic_name: "Physiotherapie Weber"
+doctor_name: "Kathrin Weber"
+doctor_title: "Physiotherapeutin"
+address: "Eppendorfer Baum 12, 20249 Hamburg"
+phone: "040 5551234"
+
+services:
+  - "Krankengymnastik"
+  - "Manuelle Therapie"
+  - "Lymphdrainage"
+  - "Sportphysiotherapie"
+  - "Massage"
+  - "Rehasport"
+
+greeting: "Physiotherapie Weber, hier spricht Lisa, die digitale Assistentin. Wie kann ich Ihnen helfen?"
+farewell: "Vielen Dank für Ihren Anruf bei Physiotherapie Weber. Auf Wiederhören!"
+
+emergency_number: "112"
+transfer_number: "+49405551234"
+
+office_hours:
+  monday:    ["07:00-20:00"]
+  tuesday:   ["07:00-20:00"]
+  wednesday: ["07:00-20:00"]
+  thursday:  ["07:00-20:00"]
+  friday:    ["07:00-20:00"]
+  saturday:  ["09:00-14:00"]
+  sunday:    []
+
+slot_duration_minutes: 30
+timezone: "Europe/Berlin"
+holiday_region: "HH"

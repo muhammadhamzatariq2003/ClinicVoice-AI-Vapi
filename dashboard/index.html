@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Call Analytics | Hamza Clinic Voice Agent</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root { --bg:#f4f5f7; --card:#fff; --text:#1f2430; --muted:#6b7280; --accent:#0f766e; --border:#e5e7eb; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg:#12151b; --card:#1b1f27; --text:#e6e8ec; --muted:#9aa3b2; --accent:#2dd4bf; --border:#2a303b; }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); padding: 24px; max-width: 1100px; margin: 0 auto; }
+    header { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: end; margin-bottom: 20px; }
+    h1 { font-size: 1.4rem; }
+    .sub { color: var(--muted); font-size: .85rem; margin-top: 2px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .controls input, .controls button { font: inherit; font-size: .85rem; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+    .controls button { cursor: pointer; }
+    .controls button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+    .kpi .label { font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+    .kpi .value { font-size: 1.9rem; font-weight: 700; margin-top: 4px; }
+    .kpi .unit { font-size: .85rem; color: var(--muted); font-weight: 400; margin-left: 2px; }
+    .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .card h2 { font-size: .9rem; margin-bottom: 10px; }
+    .empty { color: var(--muted); font-size: .85rem; padding: 24px 0; text-align: center; }
+    #msg { display: none; margin-bottom: 12px; padding: 10px 12px; border-radius: 8px; font-size: .85rem; background: #fef2f2; color: #b91c1c; }
+    @media (max-width: 760px) { .charts { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Call analytics</h1>
+      <div class="sub">Built from the server's call log. Bookings count only when the slot was actually booked.</div>
+    </div>
+    <div class="controls">
+      <button data-days="7">7 days</button>
+      <button data-days="30">30 days</button>
+      <button data-days="0">All</button>
+      <input type="date" id="from" aria-label="From">
+      <input type="date" id="to" aria-label="To">
+      <button class="primary" id="refresh">Refresh</button>
+    </div>
+  </header>
+
+  <div id="msg"></div>
+
+  <section class="kpis">
+    <div class="card kpi"><div class="label">Calls</div><div class="value" id="calls">–</div></div>
+    <div class="card kpi"><div class="label">Calls today</div><div class="value" id="today">–</div></div>
+    <div class="card kpi"><div class="label">Bookings</div><div class="value" id="bookings">–</div></div>
+    <div class="card kpi"><div class="label">Booking rate</div><div class="value"><span id="rate">–</span><span class="unit">% of calls</span></div></div>
+    <div class="card kpi"><div class="label">Avg. duration</div><div class="value"><span id="avg">–</span><span class="unit">s</span></div></div>
+  </section>
+
+  <section class="charts">
+    <div class="card"><h2>Calls per day</h2><canvas id="perDay"></canvas><div class="empty" id="perDayEmpty" hidden>No calls in this range.</div></div>
+    <div class="card"><h2>Top appointment reasons</h2><canvas id="reasons"></canvas><div class="empty" id="reasonsEmpty" hidden>No bookings in this range.</div></div>
+  </section>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const charts = {};
+    const accent = () => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+
+    function iso(d) { return d.toISOString().slice(0, 10); }
+    function showError(text) { const m = $('msg'); m.textContent = text; m.style.display = text ? 'block' : 'none'; }
+
+    async function authedFetch(url) {
+      const token = sessionStorage.getItem('dashboardToken');
+      const res = await fetch(url, { headers: token ? { Authorization: 'Bearer ' + token } : {} });
+      if (res.status === 401) {
+        const entered = prompt('This dashboard is protected. Enter the dashboard token:');
+        if (!entered) throw new Error('Token required');
+        sessionStorage.setItem('dashboardToken', entered);
+        return authedFetch(url);
+      }
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }
+
+    function draw(key, canvasId, emptyId, config, hasData) {
+      if (charts[key]) charts[key].destroy();
+      $(canvasId).hidden = !hasData;
+      $(emptyId).hidden = hasData;
+      if (hasData) charts[key] = new Chart($(canvasId), config);
+    }
+
+    function render(d) {
+      $('calls').textContent = d.calls_total;
+      $('today').textContent = d.calls_today;
+      $('bookings').textContent = d.bookings_total;
+      $('rate').textContent = d.booking_rate;
+      $('avg').textContent = d.avg_duration_sec;
+
+      const days = Object.entries(d.calls_per_day || {});
+      draw('perDay', 'perDay', 'perDayEmpty', {
+        type: 'line',
+        data: { labels: days.map(x => x[0]), datasets: [{ data: days.map(x => x[1]), borderColor: accent(), backgroundColor: accent() + '22', fill: true, tension: .3 }] },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+      }, days.length > 0);
+
+      const reasons = d.top_reasons || [];
+      draw('reasons', 'reasons', 'reasonsEmpty', {
+        type: 'bar',
+        data: { labels: reasons.map(x => x[0]), datasets: [{ data: reasons.map(x => x[1]), backgroundColor: accent(), borderRadius: 4 }] },
+        options: { indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { precision: 0 } } } }
+      }, reasons.length > 0);
+    }
+
+    async function load() {
+      showError('');
+      const p = new URLSearchParams();
+      if ($('from').value) p.set('from', $('from').value);
+      if ($('to').value) p.set('to', $('to').value);
+      try { render(await authedFetch('/api/analytics' + (p.size ? '?' + p : ''))); }
+      catch (e) { showError('Could not load analytics: ' + e.message); }
+    }
+
+    document.querySelectorAll('[data-days]').forEach(btn => btn.addEventListener('click', () => {
+      const days = Number(btn.dataset.days);
+      $('to').value = days ? iso(new Date()) : '';
+      $('from').value = days ? iso(new Date(Date.now() - days * 864e5)) : '';
+      load();
+    }));
+    $('refresh').addEventListener('click', load);
+    load();
+  </script>
+</body>
+</html>
