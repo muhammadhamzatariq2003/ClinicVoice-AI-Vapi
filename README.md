@@ -187,7 +187,3 @@ Full endpoint and payload reference: [`docs/webhook-api.md`](docs/webhook-api.md
 * **Live behaviour needs a live call.** The offline replay and unit tests cover the server; the voice, the
   model and Vapi's own formats are only exercised by real calls.
 
-## Credits and license
-
-Maintained by **Hamza**. Derived from the MIT-licensed `voice-agent` starter by mjdeving, whose copyright notice
-is kept in [`LICENSE`](LICENSE) as the license requires. MIT.
